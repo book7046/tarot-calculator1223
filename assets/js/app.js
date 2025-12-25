@@ -13,6 +13,63 @@ let supportCards = {};
 let supportCardCounts = {};
 let deferredPrompt;
 
+// --- 牌陣定義 (新增運勢類) ---
+const spreads = {
+    // 原有牌陣
+    timeflow: { 
+        name: "時間之流", 
+        cardCount: 3, 
+        positions: ["1.過去", "2.現在", "3.未來"] 
+    },
+    advice: { 
+        name: "建議牌陣", 
+        cardCount: 2, 
+        positions: ["1.現況", "2.建議"] 
+    },
+    choice: { 
+        name: "選擇牌陣", 
+        cardCount: 5, 
+        positions: ["1.現況", "2.選項A過程", "3.選項B過程", "4.選項A結果", "5.選項B結果"] 
+    },
+    davidstar: { 
+        name: "大衛之星", 
+        cardCount: 6, 
+        positions: ["1.過去", "2.現在", "3.未來", "4.原因", "5.環境", "6.對策"] 
+    },
+    ushape: { 
+        name: "U型牌陣", 
+        cardCount: 7, 
+        positions: ["1.過去", "2.現在", "3.中間過程", "4.慣性/方向", "5.環境", "6.困難", "7.答案"] 
+    },
+    relationship: { 
+        name: "關係牌陣", 
+        cardCount: 4, 
+        positions: ["1.抽牌人現況", "2.對方現況", "3.過程", "4.結果"] 
+    },
+
+    // --- 新增：運勢牌陣 ---
+    period_1: {
+        name: "單一運勢",
+        cardCount: 1,
+        positions: ["整體運勢"]
+    },
+    period_3: {
+        name: "一季運勢",
+        cardCount: 3,
+        positions: ["第一個月", "第二個月", "第三個月"]
+    },
+    period_7: {
+        name: "一週運勢",
+        cardCount: 7,
+        positions: ["週一", "週二", "週三", "週四", "週五", "週六", "週日"]
+    },
+    period_12: {
+        name: "流年運勢",
+        cardCount: 12,
+        positions: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
+    }
+};
+
 // --- 問題類型配置 ---
 const typeConfig = {
     choice: {
@@ -30,6 +87,10 @@ const typeConfig = {
     relationship: {
         examples: "💡 關係型範例：『請問塔羅牌,我想知道我跟xxx三個月(下時間點)內感情如何？』、『我想知道我跟xxx一起合作創業結果會如何？』",
         spreads: ['relationship']
+    },
+    period: {
+        examples: "💡 運勢型範例：『請問我這週每天的運勢？』、『請問我明年的流年運勢？』、『請問我今天的整體運勢？』",
+        spreads: ['period_1', 'period_7', 'period_3', 'period_12']
     }
 };
 
@@ -106,7 +167,7 @@ function selectSpread(spreadType) {
     if (typeof tarotCards !== 'undefined') { shuffledDeck = [...tarotCards]; }
 }
 
-// --- 洗牌與抽牌介面修復 ---
+// --- 洗牌與抽牌 ---
 
 function performShuffle() {
     const shuffleDeck = document.getElementById('shuffleDeck');
@@ -236,7 +297,7 @@ function updateSupportButton(position) {
     }
 }
 
-// --- 占卜結果顯示 (修正心態牌樣式) ---
+// --- 占卜結果顯示 ---
 
 function revealResults() {
     document.getElementById('drawSection').classList.add('hidden');
@@ -250,7 +311,6 @@ function displayResults() {
     const mc = document.getElementById('resultMindsetCard');
     const mo = mindsetCard.reversed ? '逆位' : '正位';
     
-    // 修正：將心態牌的按鈕與容器移出 flex 行，與其他牌卡保持一致的「下方居中」結構
     mc.innerHTML = `
         <div class="bg-gradient-to-r from-purple-900/30 to-blue-900/10 rounded-lg p-6 mb-6 border border-yellow-300/30">
             <div class="flex items-center gap-6">
@@ -269,10 +329,15 @@ function displayResults() {
             <div id="mindset-support-cards" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3"></div>
         </div>`;
       
+    // 渲染牌陣視覺圖
+    renderSpreadVisual();
+
+    // 渲染詳細列表
     const rc = document.getElementById('resultCards'); 
     rc.innerHTML = '';
     drawnCards.forEach((card, index) => {
         const div = document.createElement('div');
+        div.id = `detail-card-${index}`;
         div.className = "bg-gradient-to-r from-blue-900/20 to-indigo-900/10 rounded-lg p-6 mb-4 border border-blue-400/20";
         div.innerHTML = `
             <div class="flex items-center gap-5">
@@ -291,6 +356,159 @@ function displayResults() {
             <div id="support-cards-${index}" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3"></div>`;
         rc.appendChild(div);
     });
+}
+
+// --- 牌陣視覺圖渲染 ---
+function getVisualCardHTML(cardIndex, labelOverride = "") {
+    if (cardIndex >= drawnCards.length) return `<div class="w-16 h-24 border border-white/10 rounded"></div>`;
+    
+    const card = drawnCards[cardIndex];
+    const src = getCardImagePath(card);
+    const revClass = card.reversed ? 'transform rotate-180' : '';
+    const label = labelOverride || card.position;
+    
+    return `
+        <div class="visual-card-container mx-2 mb-2 transition-transform hover:scale-110 duration-300 cursor-pointer" onclick="document.getElementById('detail-card-${cardIndex}').scrollIntoView({behavior: 'smooth'})">
+            <div class="relative w-20 h-32 md:w-24 md:h-36 rounded-lg bg-gray-800 shadow-xl border border-yellow-500/40 overflow-hidden group">
+                <img src="${src}" class="w-full h-full object-cover ${revClass}" loading="lazy" 
+                     onerror="this.closest('.visual-card-container').innerHTML='<div class=\\'w-20 h-32 bg-gray-700 flex items-center justify-center text-xs text-center p-1\\'>${card.name}</div>'"/>
+            </div>
+            <div class="spread-grid-label max-w-[6rem]">${label}</div>
+        </div>
+    `;
+}
+
+function renderSpreadVisual() {
+    const container = document.getElementById('resultSpreadVisual');
+    container.innerHTML = '';
+    
+    let html = '';
+    
+    switch(currentSpread) {
+        case 'timeflow': 
+            html = `<div class="flex items-center gap-4">
+                ${getVisualCardHTML(0)}
+                <div class="text-yellow-500/50">➔</div>
+                ${getVisualCardHTML(1)}
+                <div class="text-yellow-500/50">➔</div>
+                ${getVisualCardHTML(2)}
+            </div>`;
+            break;
+
+        case 'advice':
+            html = `<div class="flex items-center gap-8">
+                ${getVisualCardHTML(0)}
+                ${getVisualCardHTML(1)}
+            </div>`;
+            break;
+
+        case 'relationship': 
+            // 關係牌陣：依據您的要求，兩張牌在最下方
+            html = `
+            <div class="flex flex-col items-center gap-4">
+                <div>${getVisualCardHTML(3, '4.結果')}</div>
+                
+                
+                <div>${getVisualCardHTML(2, '3.過程')}</div>
+                
+                
+                <div class="flex gap-12 border-t border-white/10 pt-2">
+                    ${getVisualCardHTML(0, '1.抽牌人現況')}
+                    ${getVisualCardHTML(1, '2.對方現況')}
+                </div>
+            </div>`;
+            break;
+
+        case 'choice':
+            // 選擇牌陣 (V型)
+            html = `
+            <div class="relative flex flex-col items-center gap-2">
+                <div class="flex gap-24 md:gap-32">
+                    ${getVisualCardHTML(3)}
+                    ${getVisualCardHTML(4)}
+                </div>
+                <div class="flex gap-12 md:gap-16 mt-2">
+                    ${getVisualCardHTML(1)}
+                    ${getVisualCardHTML(2)}
+                </div>
+                <div class="mt-2">
+                    ${getVisualCardHTML(0)}
+                </div>
+            </div>`;
+            break;
+
+        case 'ushape':
+            // U型
+            html = `
+            <div class="flex items-end gap-4 md:gap-8">
+                <div class="flex flex-col gap-2">
+                    ${getVisualCardHTML(0)}
+                    ${getVisualCardHTML(1)}
+                    ${getVisualCardHTML(2)}
+                </div>
+                <div class="pb-2">
+                    ${getVisualCardHTML(3)}
+                </div>
+                <div class="flex flex-col-reverse gap-2">
+                    ${getVisualCardHTML(4)}
+                    ${getVisualCardHTML(5)}
+                    ${getVisualCardHTML(6)}
+                </div>
+            </div>`;
+            break;
+
+        case 'davidstar':
+            // 大衛之星：依據您的要求，上三角與下三角排列，且不重疊
+            html = `
+            <div class="flex flex-col gap-8 items-center">
+                <div class="flex flex-col items-center">
+																												   
+                    <div class="flex flex-col items-center gap-2">
+                        <div>${getVisualCardHTML(3, '4.原因')}</div>
+                        <div class="flex gap-16">
+                            ${getVisualCardHTML(1, '2.現在')}
+                            ${getVisualCardHTML(2, '3.未來')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center">
+																												   
+                    <div class="flex flex-col items-center gap-2">
+                         <div class="flex gap-16">
+                            ${getVisualCardHTML(5, '6.對策')}
+                            ${getVisualCardHTML(4, '5.環境')}
+                        </div>
+                        <div>${getVisualCardHTML(0, '1.過去')}</div>
+                    </div>
+                </div>
+            </div>`;
+            break;
+        // --- 新增運勢牌陣視覺化 ---
+        case 'period_1':
+            html = `<div class="flex justify-center">${getVisualCardHTML(0)}</div>`;
+            break;
+            
+        case 'period_3': // 一季 (橫向)
+            html = `<div class="flex items-center gap-4 justify-center">
+                ${[0,1,2].map(i => getVisualCardHTML(i)).join('<div class="text-yellow-500/50">➔</div>')}
+            </div>`;
+            break;
+            
+        case 'period_7': // 一週 (橫向捲動或換行，考慮到7張很長，這裡用 Flex Wrap)
+            html = `<div class="flex flex-wrap justify-center gap-4">
+                ${drawnCards.map((_, i) => getVisualCardHTML(i)).join('')}
+            </div>`;
+            break;
+            
+        case 'period_12': // 流年 (4x3 網格)
+            html = `<div class="grid grid-cols-3 md:grid-cols-4 gap-4">
+                ${drawnCards.map((_, i) => getVisualCardHTML(i)).join('')}
+            </div>`;
+            break;
+    }
+    
+    container.innerHTML = html;
 }
 
 // --- 輔助函式 ---
@@ -319,11 +537,13 @@ function startNewReading() {
     document.getElementById('questionInput').value = "";
     document.getElementById('resultSection').classList.add('hidden');
     document.getElementById('typeSection').classList.remove('hidden');
+    document.getElementById('resultSpreadVisual').innerHTML = '';
 }
 
 function getCardImagePath(card){
     if (typeof tarotCards === 'undefined') return '';
     let idx = tarotCards.findIndex(c => c.name === card.name);
+    if(idx === -1) idx = tarotCards.findIndex(c => c.name.trim() === card.name.trim());
     return `assets/cards/${String(idx).padStart(2,'0')}.jpg`;
 }
 
@@ -332,7 +552,8 @@ function imageOrFallbackHTML(card, sizeClass) {
     const src = getCardImagePath(card);
     return `
         <div class="rws-card-frame">
-            <img class="rws-img ${sizeClass||'lg'} ${reversed}" src="${src}" loading="lazy" onerror="this.closest('.rws-card-frame').classList.add('no-img')"/>
+            <img class="rws-img ${sizeClass||'lg'} ${reversed}" src="${src}" loading="lazy" 
+                 onerror="this.closest('.rws-card-frame').classList.add('no-img')"/>
             <div class="rws-fallback ${reversed}">
                 <div class="text-base text-white">${card.name}</div>
             </div>
@@ -359,4 +580,3 @@ function setupPWAInstall() {
         if(installBtn) installBtn.classList.remove('hidden');
     });
 }
-
