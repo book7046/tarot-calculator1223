@@ -35,7 +35,7 @@
     .rws-card-frame.no-img .rws-fallback{display:flex}
     .rws-card-frame.no-img .rws-img { display: none; }
 
-    /* 扇形抽牌區 (保留原樣) */
+    /* 扇形抽牌區 */
     .fan-container { position: relative; width: 100%; height: 500px; display: flex; justify-content: center; align-items: center; overflow: hidden; }
     .fan-card { position: absolute; width: 60px; height: 90px; transition: all 0.3s ease; transform-origin: bottom center; cursor: pointer; }
     .fan-card:hover { transform: translateY(-20px) scale(1.1); z-index: 100; }
@@ -44,6 +44,9 @@
     /* 視覺化牌陣專用樣式 */
     .spread-grid-label { font-size: 0.75rem; color: #fef08a; text-align: center; margin-top: 0.25rem; text-shadow: 0 1px 2px rgba(0,0,0,0.8); white-space: nowrap; }
     .visual-card-container { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+
+    /* 歷史紀錄 Modal */
+    #historyModal { z-index: 9999; }
   </style>
 </head>
 <body class="mystical-bg min-h-screen text-white">
@@ -51,9 +54,28 @@
         <div class="text-center mb-8 relative">
             <h1 class="text-4xl font-bold mb-2 text-yellow-300">🔮 布克塔羅</h1>
             <p class="text-lg text-blue-200">偉特塔羅牌占卜系統</p>
-            <button id="installAppBtn" class="hidden mt-4 bg-white/10 hover:bg-white/20 text-yellow-300 border border-yellow-300/30 px-4 py-2 rounded-full text-sm transition-all">
-                📲 安裝到桌面
-            </button>
+            <div class="flex justify-center gap-2 mt-4">
+                <button id="installAppBtn" class="hidden bg-white/10 hover:bg-white/20 text-yellow-300 border border-yellow-300/30 px-4 py-2 rounded-full text-sm transition-all">
+                    📲 安裝
+                </button>
+                <button id="showHistoryBtn" class="bg-white/10 hover:bg-white/20 text-blue-200 border border-blue-200/30 px-4 py-2 rounded-full text-sm transition-all">
+                    📜 歷史紀錄
+                </button>
+            </div>
+        </div>
+
+        <div id="historyModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+            <div class="bg-slate-900/90 border border-yellow-500/30 rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl">
+                <div class="p-4 border-b border-white/10 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-yellow-300">📜 占卜紀錄</h3>
+                    <button id="closeHistoryBtn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
+                <div id="historyList" class="p-4 overflow-y-auto flex-1 space-y-3">
+                    </div>
+                <div class="p-4 border-t border-white/10 text-center">
+                    <button id="clearHistoryBtn" class="text-xs text-red-400 hover:text-red-300 underline">清除所有紀錄</button>
+                </div>
+            </div>
         </div>
 
         <div id="typeSection" class="max-w-2xl mx-auto mb-8 bg-white/10 backdrop-blur-sm rounded-lg p-6">
@@ -235,6 +257,9 @@
                 <h2 class="text-2xl font-semibold mb-2">🌟 占卜結果</h2>
                 <div id="questionDisplay" class="text-lg text-yellow-300 mb-2 font-medium"></div>
                 <div id="spreadName" class="text-blue-200 text-sm"></div>
+                <button id="shareBtn" class="mt-4 bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2 rounded-full text-sm flex items-center gap-2 mx-auto hidden">
+                    📤 分享結果
+                </button>
             </div>
             
             <div id="resultMindsetCard" class="mb-10"></div>
@@ -252,8 +277,7 @@
         </div>
     </div>
 
-    <script src="assets/js/tarot-data.js"></script>
-    <script src="assets/js/app.js"></script>
+    <script type="module" src="assets/js/app.js"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
