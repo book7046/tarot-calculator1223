@@ -1,6 +1,88 @@
 // assets/js/tarot-data.js
-// 完整 78 張偉特塔羅牌數據
-const tarotCards = [
+
+// --- 牌陣定義 ---
+export const spreads = {
+    // 原有牌陣
+    timeflow: { 
+        name: "時間之流", 
+        cardCount: 3, 
+        positions: ["1.過去", "2.現在", "3.未來"] 
+    },
+    advice: { 
+        name: "建議牌陣", 
+        cardCount: 2, 
+        positions: ["1.現況", "2.建議"] 
+    },
+    choice: { 
+        name: "選擇牌陣", 
+        cardCount: 5, 
+        positions: ["1.現況", "2.選項A過程", "3.選項B過程", "4.選項A結果", "5.選項B結果"] 
+    },
+    davidstar: { 
+        name: "大衛之星", 
+        cardCount: 6, 
+        positions: ["1.過去", "2.現在", "3.未來", "4.原因", "5.環境", "6.對策"] 
+    },
+    ushape: { 
+        name: "U型牌陣", 
+        cardCount: 7, 
+        positions: ["1.過去", "2.現在", "3.中間過程", "4.慣性/方向", "5.環境", "6.困難", "7.答案"] 
+    },
+    relationship: { 
+        name: "關係牌陣", 
+        cardCount: 4, 
+        positions: ["1.抽牌人現況", "2.對方現況", "3.過程", "4.結果"] 
+    },
+
+    // --- 運勢牌陣 ---
+    period_1: {
+        name: "單一運勢",
+        cardCount: 1,
+        positions: ["整體運勢"]
+    },
+    period_3: {
+        name: "一季運勢",
+        cardCount: 3,
+        positions: ["第一個月", "第二個月", "第三個月"]
+    },
+    period_7: {
+        name: "一週運勢",
+        cardCount: 7,
+        positions: ["週一", "週二", "週三", "週四", "週五", "週六", "週日"]
+    },
+    period_12: {
+        name: "流年運勢",
+        cardCount: 12,
+        positions: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"]
+    }
+};
+
+// --- 問題類型配置 ---
+export const typeConfig = {
+    choice: {
+        examples: "💡 選擇型範例：『請問塔羅牌，我想知道我現在在工作上該做那個選擇對我未來比較好,如果選擇離職對我比較好是選項A,如果選擇繼續待在現在的公司對我比較好是選項B？』",
+        spreads: ['choice']
+    },
+    advice: {
+        examples: "💡 建議型範例：『請問塔羅牌,我該怎麼做才能把塔羅牌學好,請塔羅牌給我一個建議？』",
+        spreads: ['advice']
+    },
+    result: {
+        examples: "💡 結果型範例：請問塔羅牌,我想知道我這個月的工作運會如何？』、『請問塔羅牌,我想知道月底業績會如何？』",
+        spreads: ['timeflow', 'davidstar', 'ushape']
+    },
+    relationship: {
+        examples: "💡 關係型範例：『請問塔羅牌,我想知道我跟xxx三個月(下時間點)內感情如何？』、『我想知道我跟xxx一起合作創業結果會如何？』",
+        spreads: ['relationship']
+    },
+    period: {
+        examples: "💡 運勢型範例：『請問我這週每天的運勢？』、『請問我明年的流年運勢？』、『請問我今天的整體運勢？』",
+        spreads: ['period_1', 'period_7', 'period_3', 'period_12']
+    }
+};
+
+// --- 完整 78 張偉特塔羅牌數據 ---
+export const tarotCards = [
     { name: "愚者", number: "0", suit: "大牌", meaning: "心靈好牌、世俗壞牌；體驗與自由、活在當下", reversedMeaning: "沒有活在當下；內心恐懼而無法體驗；敷衍、失去責任感" },
     { name: "魔法師", number: "I", suit: "大牌", meaning: "開始的創造；善用知識與經驗，做就對了", reversedMeaning: "精神耗弱；不適合行動；表達障礙、詐欺、溝通不良" },
     { name: "女祭司", number: "II", suit: "大牌", meaning: "以靜制動；肯定現況，不改變是好的", reversedMeaning: "理智斷線；感情用事；情緒崩潰、口是心非" },
@@ -80,15 +162,3 @@ const tarotCards = [
     { name: "錢幣皇后", number: "皇后", suit: "錢幣", meaning: "繁榮安定；理財得宜，給予支持照顧", reversedMeaning: "吝嗇寒酸；財務出問題/亂花錢" },
     { name: "錢幣國王", number: "國王", suit: "錢幣", meaning: "富裕踏實；保守務實、金主型人物", reversedMeaning: "吝嗇固執貪婪；財務危機/失去靠山" }
 ];
-
-// 牌陣配置
-//const spreads = {
-//    timeflow: { name: "時間之流", positions: ["過去", "現在", "未來"], cardCount: 3 },
-//    davidstar: { name: "大衛之星牌陣", positions: ["過去", "現在", "未來", "原因", "環境", "對策"], cardCount: 6 },
-//    ushape: { name: "U型牌陣", positions: ["過去", "現在", "中間過程", "慣性方向", "環境", "困難", "答案"], cardCount: 7 },
-//    choice: { name: "選擇牌陣", positions: ["現況", "選項A過程", "選項B過程", "選項A結果", "選項B結果"], cardCount: 5 },
-//    relationship: { name: "關係(感情牌陣)", positions: ["抽牌人現況(狀態)", "對方現況(狀態)", "過程", "結果"], cardCount: 4 },
-//    advice: { name: "建議牌陣(解藥牌陣)", positions: ["現況", "建議"], cardCount: 2 }
-//
-//};
-//
