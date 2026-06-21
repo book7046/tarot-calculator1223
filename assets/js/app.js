@@ -422,34 +422,39 @@ function renderSpreadVisual() {
         case 'period_3': html = `<div class="flex items-center gap-4 justify-center">${[0,1,2].map(i => getVisualCardHTML(i)).join('<div class="text-yellow-500/50">➔</div>')}</div>`; break;
         case 'period_7': html = `<div class="flex flex-wrap justify-center gap-4">${drawnCards.map((_, i) => getVisualCardHTML(i)).join('')}</div>`; break;
         case 'period_12': html = `<div class="grid grid-cols-3 md:grid-cols-4 gap-4">${drawnCards.map((_, i) => getVisualCardHTML(i)).join('')}</div>`; break;
-		case 'four_seasons':
+		// 🌟 請用這段程式碼完全覆蓋 app.js 裡 case 'four_seasons': 的內容
+        case 'four_seasons':
             html = `
-                <div class="flex flex-col items-center justify-center space-y-4 my-2 max-w-full scale-90 md:scale-100">
-                    <div class="flex flex-col items-center p-2 bg-yellow-500/5 border border-yellow-500/10 rounded-lg">
-                        <span class="text-xs text-yellow-400 font-bold mb-1">🪙 北方：錢幣 (財運/資源)</span>
-                        <div class="flex space-x-1">${getVisualCardHTML(6, '元素')}${getVisualCardHTML(7, '心態')}</div>
-                    </div>
-
-                    <div class="flex items-center justify-center space-x-2 md:space-x-6 w-full">
-                        <div class="flex flex-col items-center p-2 bg-orange-500/5 border border-orange-500/10 rounded-lg">
-                            <span class="text-xs text-orange-400 font-bold mb-1">🌿 西方：權杖 (工作/行動)</span>
-                            <div class="flex space-x-1">${getVisualCardHTML(0, '元素')}${getVisualCardHTML(1, '心態')}</div>
+                <div class="overflow-x-auto w-full p-2 flex justify-start md:justify-center">
+                    <div class="flex flex-col items-center justify-center space-y-4 my-2 w-[420px] md:w-full mx-auto flex-shrink-0">
+                        
+                        <div class="flex flex-col items-center p-2 bg-yellow-500/5 border border-yellow-500/10 rounded-lg">
+                            <span class="text-xs text-yellow-400 font-bold mb-1">🪙 北方：錢幣 (財運/資源)</span>
+                            <div class="flex space-x-1">${getVisualCardHTML(6, '元素')}${getVisualCardHTML(7, '心態')}</div>
                         </div>
 
-                        <div class="flex flex-col items-center p-2 bg-purple-500/10 border border-yellow-300/30 rounded-lg shadow-lg">
-                            <span class="text-xs text-yellow-300 font-bold mb-1">✨ 中央：大牌 (整體心靈)</span>
-                            <div class="flex space-x-1">${getVisualCardHTML(8, '核心')}${getVisualCardHTML(9, '心態')}</div>
+                        <div class="flex items-center justify-center space-x-1 md:space-x-6 w-full">
+                            <div class="flex flex-col items-center p-1.5 bg-orange-500/5 border border-orange-500/10 rounded-lg">
+                                <span class="text-[10px] md:text-xs text-orange-400 font-bold mb-1">🌿 西方：權杖 (工作)</span>
+                                <div class="flex space-x-0.5 md:space-x-1">${getVisualCardHTML(0, '元素')}${getVisualCardHTML(1, '心態')}</div>
+                            </div>
+
+                            <div class="flex flex-col items-center p-1.5 bg-purple-500/10 border border-yellow-300/30 rounded-lg shadow-lg">
+                                <span class="text-[10px] md:text-xs text-yellow-300 font-bold mb-1">✨ 中央：大牌 (心靈)</span>
+                                <div class="flex space-x-0.5 md:space-x-1">${getVisualCardHTML(8, '核心')}${getVisualCardHTML(9, '心態')}</div>
+                            </div>
+
+                            <div class="flex flex-col items-center p-1.5 bg-blue-500/5 border border-blue-500/10 rounded-lg">
+                                <span class="text-[10px] md:text-xs text-blue-400 font-bold mb-1">⚔️ 東方：寶劍 (想法)</span>
+                                <div class="flex space-x-0.5 md:space-x-1">${getVisualCardHTML(4, '元素')}${getVisualCardHTML(5, '心態')}</div>
+                            </div>
                         </div>
 
-                        <div class="flex flex-col items-center p-2 bg-blue-500/5 border border-blue-500/10 rounded-lg">
-                            <span class="text-xs text-blue-400 font-bold mb-1">⚔️ 東方：寶劍 (想法/思緒)</span>
-                            <div class="flex space-x-1">${getVisualCardHTML(4, '元素')}${getVisualCardHTML(5, '心態')}</div>
+                        <div class="flex flex-col items-center p-2 bg-pink-500/5 border border-pink-500/10 rounded-lg">
+                            <span class="text-xs text-pink-400 font-bold mb-1">🏆 南方：聖杯 (情感/情緒)</span>
+                            <div class="flex space-x-1">${getVisualCardHTML(2, '元素')}${getVisualCardHTML(3, '心態')}</div>
                         </div>
-                    </div>
-
-                    <div class="flex flex-col items-center p-2 bg-pink-500/5 border border-pink-500/10 rounded-lg">
-                        <span class="text-xs text-pink-400 font-bold mb-1">🏆 南方：聖杯 (情感/情緒)</span>
-                        <div class="flex space-x-1">${getVisualCardHTML(2, '元素')}${getVisualCardHTML(3, '心態')}</div>
+                        
                     </div>
                 </div>
             `;
