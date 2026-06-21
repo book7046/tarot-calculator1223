@@ -115,18 +115,31 @@ function performShuffle() {
     }
 }
 
+
 function performCut() {
+    // 1. 隨機切牌的基礎邏輯
     const cutPoint = Math.floor(Math.random() * (shuffledDeck.length - 20)) + 10;
     const topHalf = shuffledDeck.slice(0, cutPoint);
     const bottomHalf = shuffledDeck.slice(cutPoint);
     shuffledDeck = [...bottomHalf, ...topHalf];
+    
     const isReversed = Math.random() < 0.5;
     mindsetCard = { ...shuffledDeck[0], reversed: isReversed };
     shuffledDeck = shuffledDeck.slice(1);
     shuffledDeck.push(mindsetCard);
-    document.getElementById('shuffleSection').classList.add('hidden');
-    document.getElementById('mindsetSection').classList.remove('hidden');
-    displayMindsetCard();
+    
+    // 2. ✨ 核心關鍵：在這裡判斷是否為四季牌陣
+    if (currentSpread === 'four_seasons') {
+        // 如果是四季牌陣，直接隱藏洗牌切牌區
+        document.getElementById('shuffleSection').classList.add('hidden');
+        // 直接繞過心態牌顯示畫面，呼叫進入抽牌區的函數！
+        proceedToDrawing();
+    } else {
+        // 其他原本的牌陣，照舊彈出心態牌畫面
+        document.getElementById('shuffleSection').classList.add('hidden');
+        document.getElementById('mindsetSection').classList.remove('hidden');
+        displayMindsetCard();
+    }
 }
 
 function createCardDeck() {
@@ -152,22 +165,63 @@ function createCardDeck() {
         const y = -Math.cos(radian) * radius * 0.4 + yOffset;
         card.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
         card.style.zIndex = 50 - Math.abs(i - Math.floor(totalCards / 2));
-        const cardData = shuffledDeck[i];
-        card.addEventListener('click', function () { drawCard(this, cardData); });
+		// 🌟 修正點擊事件：不再直接綁定固定的 shuffledDeck[i]，改由點擊時依進度動態篩選
+        card.addEventListener('click', function () { 
+            if (this.classList.contains('selected')) return;
+            
+            // 呼叫篩選機制
+            const targetCard = getFilteredCardByProgress();
+            if (targetCard) {
+                drawCard(this, targetCard);
+            }
+        });
         deck.appendChild(card);
     }
+}
+
+function getFilteredCardByProgress() {
+    const currentCount = selectedCards.length; // 目前抽了幾張
+    
+    // 如果不是四季牌陣，則依照原本的邏輯，直接從還沒被抽過的牌中回傳第一張
+    if (currentSpread !== 'four_seasons') {
+        return shuffledDeck.find(card => !drawnCards.some(dc => dc.name === card.name));
+    }
+    
+    // 🍁 四季牌陣專屬：根據進度，強制篩選對應的編號範圍
+    let minId = 0, maxId = 77;
+    if (currentCount === 0 || currentCount === 1) { minId = 22; maxId = 35; }      // 權杖
+    else if (currentCount === 2 || currentCount === 3) { minId = 36; maxId = 49; } // 聖杯
+    else if (currentCount === 4 || currentCount === 5) { minId = 50; maxId = 63; } // 寶劍
+    else if (currentCount === 6 || currentCount === 7) { minId = 64; maxId = 77; } // 錢幣
+    else if (currentCount === 8 || currentCount === 9) { minId = 0; maxId = 21; }  // 大牌
+
+    // 從全牌組中篩選出符合該區間編號，且在本次占卜中「還沒被抽過」的牌
+    const validPool = tarotCards.filter((card, index) => {
+        return index >= minId && index <= maxId && !drawnCards.some(dc => dc.name === card.name);
+    });
+
+    if (validPool.length === 0) return null;
+    // 從符合資格的剩餘牌池中，隨機選取一張
+    const randomPicked = validPool[Math.floor(Math.random() * validPool.length)];
+    return shuffledDeck.find(c => c.name === randomPicked.name);
 }
 
 function drawCard(cardElement, selectedCard) {
     const totalNeeded = spreads[currentSpread].cardCount;
     if (selectedCards.length >= totalNeeded) return;
+    
     const isReversed = Math.random() < 0.5;
+    
+    // 寫入抽卡資訊
     drawnCards.push({
         ...selectedCard,
         reversed: isReversed,
         position: spreads[currentSpread].positions[selectedCards.length]
     });
+    
     selectedCards.push(cardElement);
+    
+    // 從當前洗好的牌中移除已被抽出的這張牌
     const idx = shuffledDeck.indexOf(selectedCard);
     if (idx !== -1) shuffledDeck.splice(idx, 1);
     cardElement.classList.add('selected');
@@ -177,7 +231,21 @@ function drawCard(cardElement, selectedCard) {
     const infoText = document.querySelector('#drawSection p');
 
     if (remaining > 0) {
-        infoText.innerHTML = `還需抽取 <span id="cardsNeeded" class="text-yellow-300 font-bold">${remaining}</span> 張 (進度: ${currentDrawn}/${totalNeeded})`;
+        // 🌟 核心動態提示：依據下一個即將被抽取的位置，提示玩家該抽哪一類
+        let categoryPrompt = "";
+        if (currentSpread === 'four_seasons') {
+            if (currentDrawn === 1) categoryPrompt = " ➔ <span class='text-orange-300'>續抽【權杖心態牌】</span>";
+            else if (currentDrawn === 2) categoryPrompt = " ➔ <span class='text-pink-400'>請抽【聖杯元素牌】</span>";
+            else if (currentDrawn === 3) categoryPrompt = " ➔ <span class='text-pink-300'>續抽【聖杯心態牌】</span>";
+            else if (currentDrawn === 4) categoryPrompt = " ➔ <span class='text-blue-400'>請抽【寶劍元素牌】</span>";
+            else if (currentDrawn === 5) categoryPrompt = " ➔ <span class='text-blue-300'>續抽【寶劍心態牌】</span>";
+            else if (currentDrawn === 6) categoryPrompt = " ➔ <span class='text-yellow-400'>請抽【錢幣元素牌】</span>";
+            else if (currentDrawn === 7) categoryPrompt = " ➔ <span class='text-yellow-300'>續抽【錢幣心態牌】</span>";
+            else if (currentDrawn === 8) categoryPrompt = " ➔ <span class='text-purple-400 font-bold'>請抽【中央大牌核心】</span>";
+            else if (currentDrawn === 9) categoryPrompt = " ➔ <span class='text-purple-300 font-bold'>續抽【大牌心態牌】</span>";
+        }
+        
+        infoText.innerHTML = `還需抽取 <span id="cardsNeeded" class="text-yellow-300 font-bold">${remaining}</span> 張 (進度: ${currentDrawn}/${totalNeeded})${categoryPrompt}`;
     } else {
         infoText.innerHTML = `<span class="text-green-400 font-bold">✨ 抽牌已完成 (${totalNeeded}/${totalNeeded})</span>`;
         document.getElementById('revealBtn').classList.remove('hidden');
@@ -188,6 +256,12 @@ function proceedToDrawing() {
     document.getElementById('mindsetSection').classList.add('hidden');
     document.getElementById('drawSection').classList.remove('hidden');
     const total = spreads[currentSpread].cardCount;
+	if (currentSpread === 'four_seasons') {
+        document.querySelector('#drawSection p').innerHTML = `還需抽取 <span id="cardsNeeded" class="text-yellow-300 font-bold">${total}</span> 張 (進度: 0/${total}) ➔ <span class="text-orange-400">請抽【權杖元素牌】</span>`;
+    } else {
+        document.querySelector('#drawSection p').innerHTML = `還需抽取 <span id="cardsNeeded" class="text-yellow-300 font-bold">${total}</span> 張 (進度: 0/${total})`;
+    }
+    createCardDeck();
     document.querySelector('#drawSection p').innerHTML = `還需抽取 <span id="cardsNeeded" class="text-yellow-300 font-bold">${total}</span> 張 (進度: 0/${total})`;
     createCardDeck();
 }
@@ -236,6 +310,18 @@ function revealResults() {
     document.getElementById('resultSection').classList.remove('hidden');
     document.getElementById('questionDisplay').textContent = `問題：${currentQuestion}`;
     document.getElementById('spreadName').textContent = `牌陣：${spreads[currentSpread].name}`;
+	
+    const mcContainer = document.getElementById('resultMindsetCard');
+    if (currentSpread === 'four_seasons') {
+        mcContainer.style.display = 'none';
+    } else {
+        mcContainer.style.display = 'block';
+    }
+    
+    if (navigator.share) {
+        document.getElementById('shareBtn').classList.remove('hidden');
+        document.getElementById('shareBtn').classList.add('flex');
+    }
     
     // 顯示分享按鈕
     if (navigator.share) {
@@ -336,6 +422,38 @@ function renderSpreadVisual() {
         case 'period_3': html = `<div class="flex items-center gap-4 justify-center">${[0,1,2].map(i => getVisualCardHTML(i)).join('<div class="text-yellow-500/50">➔</div>')}</div>`; break;
         case 'period_7': html = `<div class="flex flex-wrap justify-center gap-4">${drawnCards.map((_, i) => getVisualCardHTML(i)).join('')}</div>`; break;
         case 'period_12': html = `<div class="grid grid-cols-3 md:grid-cols-4 gap-4">${drawnCards.map((_, i) => getVisualCardHTML(i)).join('')}</div>`; break;
+		case 'four_seasons':
+            html = `
+                <div class="flex flex-col items-center justify-center space-y-4 my-2 max-w-full scale-90 md:scale-100">
+                    <div class="flex flex-col items-center p-2 bg-yellow-500/5 border border-yellow-500/10 rounded-lg">
+                        <span class="text-xs text-yellow-400 font-bold mb-1">🪙 北方：錢幣 (財運/資源)</span>
+                        <div class="flex space-x-1">${getVisualCardHTML(6, '元素')}${getVisualCardHTML(7, '心態')}</div>
+                    </div>
+
+                    <div class="flex items-center justify-center space-x-2 md:space-x-6 w-full">
+                        <div class="flex flex-col items-center p-2 bg-orange-500/5 border border-orange-500/10 rounded-lg">
+                            <span class="text-xs text-orange-400 font-bold mb-1">🌿 西方：權杖 (工作/行動)</span>
+                            <div class="flex space-x-1">${getVisualCardHTML(0, '元素')}${getVisualCardHTML(1, '心態')}</div>
+                        </div>
+
+                        <div class="flex flex-col items-center p-2 bg-purple-500/10 border border-yellow-300/30 rounded-lg shadow-lg">
+                            <span class="text-xs text-yellow-300 font-bold mb-1">✨ 中央：大牌 (整體心靈)</span>
+                            <div class="flex space-x-1">${getVisualCardHTML(8, '核心')}${getVisualCardHTML(9, '心態')}</div>
+                        </div>
+
+                        <div class="flex flex-col items-center p-2 bg-blue-500/5 border border-blue-500/10 rounded-lg">
+                            <span class="text-xs text-blue-400 font-bold mb-1">⚔️ 東方：寶劍 (想法/思緒)</span>
+                            <div class="flex space-x-1">${getVisualCardHTML(4, '元素')}${getVisualCardHTML(5, '心態')}</div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col items-center p-2 bg-pink-500/5 border border-pink-500/10 rounded-lg">
+                        <span class="text-xs text-pink-400 font-bold mb-1">🏆 南方：聖杯 (情感/情緒)</span>
+                        <div class="flex space-x-1">${getVisualCardHTML(2, '元素')}${getVisualCardHTML(3, '心態')}</div>
+                    </div>
+                </div>
+            `;
+            break;
     }
     container.innerHTML = html;
 }
