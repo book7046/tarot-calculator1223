@@ -142,39 +142,63 @@ function performCut() {
     }
 }
 
+
 function createCardDeck() {
-    const deck = document.getElementById('cardDeck');
-    const container = document.querySelector('.fan-container');
+    // 確保正確抓到 HTML 中的抽牌容器
+    const deck = document.getElementById('cardDeck') || document.querySelector('.fan-container');
     deck.innerHTML = '';
-    const totalCards = shuffledDeck.length;
-    const fanAngle = 140;
-    const angleStep = fanAngle / (totalCards - 1);
-    const startAngle = -fanAngle / 2;
-
-    const containerWidth = container.offsetWidth;
-    const radius = Math.min(280, containerWidth * 0.45); 
-    const yOffset = containerWidth < 500 ? 120 : 150; 
-
-    for (let i = 0; i < totalCards; i++) {
+    
+    // 取得目前螢幕/容器的實際寬度
+    const containerWidth = deck.parentElement ? deck.parentElement.offsetWidth : window.innerWidth;
+    const isMobile = containerWidth < 500;
+    
+    // 總共顯示的牌數
+    const totalCardsToShow = 36; 
+    
+    // 💡 核心修正：動態計算半徑與角度，防止手機版裁切
+    // 半徑：手機版自動縮小（容器寬度的一半再扣除卡片預留空間），電腦版維持 220
+    const radius = isMobile ? (containerWidth / 2) - 35 : 220; 
+    // 展開角度：手機版縮窄至 80 度避免太開，電腦版維持 100 度
+    const totalAngle = isMobile ? 80 : 100;
+    const angleStep = totalAngle / (totalCardsToShow - 1);
+    const startAngle = -totalAngle / 2;
+    
+    // 微調卡牌的 Y 軸起始位置，避免手機上頂到上面的文字
+    const yOffset = isMobile ? 80 : 30; 
+    
+    for (let i = 0; i < totalCardsToShow; i++) {
         const card = document.createElement('div');
-        card.className = 'fan-card card-back rounded-lg flex items-center justify-center text-lg';
+        // 維持原有的 CSS 類別與樣式
+        card.className = 'fan-card card-back rounded-lg flex items-center justify-center text-lg absolute';
         card.innerHTML = '🌟';
+        
+        // 賦予卡片長寬 (對應原本 css 裡的 60x90)
+        card.style.width = '60px';
+        card.style.height = '90px';
+        
         const angle = startAngle + (i * angleStep);
-        const radian = (angle * Math.PI) / 180;
-        const x = Math.sin(radian) * radius;
-        const y = -Math.cos(radian) * radius * 0.4 + yOffset;
+        const radian = angle * Math.PI / 180;
+        
+        // 計算 X 與 Y 的弧形座標
+        const x = radius * Math.sin(radian);
+        const y = radius * (1 - Math.cos(radian)) + yOffset;
+        
         card.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
-        card.style.zIndex = 50 - Math.abs(i - Math.floor(totalCards / 2));
-		// 🌟 修正點擊事件：不再直接綁定固定的 shuffledDeck[i]，改由點擊時依進度動態篩選
-        card.addEventListener('click', function () { 
-            if (this.classList.contains('selected')) return;
+        card.dataset.index = i;
+        
+        // 點擊抽牌事件
+        card.addEventListener('click', function() {
+            if (this.classList.contains('drawn') || this.classList.contains('selected')) return;
             
-            // 呼叫篩選機制
+            // 呼叫我們之前寫好的篩選機制
             const targetCard = getFilteredCardByProgress();
             if (targetCard) {
+                // 點擊後讓該張視覺牌消失或變暗
+                this.classList.add('drawn', 'opacity-0', 'pointer-events-none');
                 drawCard(this, targetCard);
             }
         });
+        
         deck.appendChild(card);
     }
 }
