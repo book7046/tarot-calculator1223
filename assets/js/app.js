@@ -423,17 +423,19 @@ function renderSpreadVisual() {
         case 'period_7': html = `<div class="flex flex-wrap justify-center gap-4">${drawnCards.map((_, i) => getVisualCardHTML(i)).join('')}</div>`; break;
         case 'period_12': html = `<div class="grid grid-cols-3 md:grid-cols-4 gap-4">${drawnCards.map((_, i) => getVisualCardHTML(i)).join('')}</div>`; break;
 		// 🌟 請用這段程式碼完全覆蓋 app.js 裡 case 'four_seasons': 的內容
+        // 🌟 請用這段最新修正的程式碼完全覆蓋 app.js 裡 case 'four_seasons': 的內容
         case 'four_seasons':
             html = `
                 <div class="overflow-x-auto w-full p-2 flex justify-start md:justify-center">
-                    <div class="flex flex-col items-center justify-center space-y-4 my-2 w-[420px] md:w-full mx-auto flex-shrink-0">
+                    
+                    <div class="flex flex-col items-center justify-center space-y-4 my-2 min-w-[440px] md:w-full mx-auto px-4 flex-shrink-0">
                         
                         <div class="flex flex-col items-center p-2 bg-yellow-500/5 border border-yellow-500/10 rounded-lg">
                             <span class="text-xs text-yellow-400 font-bold mb-1">🪙 北方：錢幣 (財運/資源)</span>
                             <div class="flex space-x-1">${getVisualCardHTML(6, '元素')}${getVisualCardHTML(7, '心態')}</div>
                         </div>
 
-                        <div class="flex items-center justify-center space-x-1 md:space-x-6 w-full">
+                        <div class="flex items-center justify-center space-x-2 md:space-x-6 w-full">
                             <div class="flex flex-col items-center p-1.5 bg-orange-500/5 border border-orange-500/10 rounded-lg">
                                 <span class="text-[10px] md:text-xs text-orange-400 font-bold mb-1">🌿 西方：權杖 (工作)</span>
                                 <div class="flex space-x-0.5 md:space-x-1">${getVisualCardHTML(0, '元素')}${getVisualCardHTML(1, '心態')}</div>
