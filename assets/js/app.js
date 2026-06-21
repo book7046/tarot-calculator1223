@@ -143,8 +143,9 @@ function performCut() {
 }
 
 
+// 🌟 替換 app.js 裡的 createCardDeck 函數
+
 function createCardDeck() {
-    // 確保正確抓到 HTML 中的抽牌容器
     const deck = document.getElementById('cardDeck') || document.querySelector('.fan-container');
     deck.innerHTML = '';
     
@@ -152,48 +153,53 @@ function createCardDeck() {
     const containerWidth = deck.parentElement ? deck.parentElement.offsetWidth : window.innerWidth;
     const isMobile = containerWidth < 500;
     
-    // 總共顯示的牌數
-    const totalCardsToShow = 36; 
+    // 🌟 恢復完整的牌數！直接使用目前洗好牌的總數（通常是 78 張）
+    const totalCardsToShow = shuffledDeck.length > 0 ? shuffledDeck.length : 78; 
     
-    // 💡 核心修正：動態計算半徑與角度，防止手機版裁切
-    // 半徑：手機版自動縮小（容器寬度的一半再扣除卡片預留空間），電腦版維持 220
-    const radius = isMobile ? (containerWidth / 2) - 35 : 220; 
-    // 展開角度：手機版縮窄至 80 度避免太開，電腦版維持 100 度
-    const totalAngle = isMobile ? 80 : 100;
+    // 💡 終極防切邊計算：
+    // 手機版半徑：螢幕寬度的一半，再扣除「卡片一半寬度(30px) + 安全邊距(10px)」，保證絕不切邊
+    const radius = isMobile ? (containerWidth / 2) - 40 : 280; 
+    
+    // 展開角度：78張牌需要大一點的角度，手機版展開 100 度，電腦版 140 度
+    const totalAngle = isMobile ? 100 : 140;
     const angleStep = totalAngle / (totalCardsToShow - 1);
     const startAngle = -totalAngle / 2;
     
-    // 微調卡牌的 Y 軸起始位置，避免手機上頂到上面的文字
-    const yOffset = isMobile ? 80 : 30; 
+    // 微調 Y 軸，讓牌在手機畫面上稍微往下，不擋住文字
+    const yOffset = isMobile ? 80 : 120; 
     
     for (let i = 0; i < totalCardsToShow; i++) {
         const card = document.createElement('div');
-        // 維持原有的 CSS 類別與樣式
-        card.className = 'fan-card card-back rounded-lg flex items-center justify-center text-lg absolute';
+        
+        // 加上 shadow 陰影跟微弱邊框，讓 78 張牌疊在一起時更有層次感
+        card.className = 'fan-card card-back rounded-lg flex items-center justify-center text-lg absolute cursor-pointer shadow-sm border border-yellow-500/30';
         card.innerHTML = '🌟';
         
-        // 賦予卡片長寬 (對應原本 css 裡的 60x90)
+        // 強制鎖定卡片長寬
         card.style.width = '60px';
         card.style.height = '90px';
         
         const angle = startAngle + (i * angleStep);
         const radian = angle * Math.PI / 180;
         
-        // 計算 X 與 Y 的弧形座標
+        // 計算完美弧形的 X 與 Y 座標 (Y 軸乘上 0.3 產生橢圓扁平的扇形感)
         const x = radius * Math.sin(radian);
-        const y = radius * (1 - Math.cos(radian)) + yOffset;
+        const y = -Math.cos(radian) * radius * (isMobile ? 0.3 : 0.4) + yOffset;
         
         card.style.transform = `translate(${x}px, ${y}px) rotate(${angle}deg)`;
         card.dataset.index = i;
+        
+        // 🌟 關鍵：設定 Z-index，讓最中間的牌在最上層，兩側往下壓，看起來就像真實推開的牌疊
+        card.style.zIndex = 100 - Math.abs(i - Math.floor(totalCardsToShow / 2));
         
         // 點擊抽牌事件
         card.addEventListener('click', function() {
             if (this.classList.contains('drawn') || this.classList.contains('selected')) return;
             
-            // 呼叫我們之前寫好的篩選機制
+            // 呼叫篩選機制 (確保四季牌陣正確抽牌)
             const targetCard = getFilteredCardByProgress();
             if (targetCard) {
-                // 點擊後讓該張視覺牌消失或變暗
+                // 點出後讓該張牌消失並觸發抽牌邏輯
                 this.classList.add('drawn', 'opacity-0', 'pointer-events-none');
                 drawCard(this, targetCard);
             }
